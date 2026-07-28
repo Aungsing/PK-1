@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>CAN WE MEET?</title>
+
+<style>
+  /* ============================================================
+     TOKENS — palette, type scale, spacing
+     ============================================================ */
+  :root{
+    --bg:#050505;
+    --card:#101010;
+    --red:#E50914;
+    --red-soft:#B71C1C;
+    --white:#F5F5F5;
+    --gray:#BDBDBD;
+    --serif: Georgia, 'Times New Roman', 'Iowan Old Style', serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+
+  html{ scroll-behavior:smooth; }
+
+  body{
+    background:var(--bg);
+    color:var(--white);
+    font-family:var(--sans);
+    overflow-x:hidden;
+    min-height:100vh;
+  }
+
+  ::selection{ background:var(--red-soft); color:var(--white); }
+
+  /* thin cinematic scrollbar */
+  ::-webkit-scrollbar{ width:6px; }
+  ::-webkit-scrollbar-track{ background:var(--bg); }
+  ::-webkit-scrollbar-thumb{ background:var(--red-soft); border-radius:4px; }
+
+  /* ============================================================
+     PAGE STRUCTURE
+     ============================================================ */
+  .page{ width:100%; }
+
+  #page1{
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    text-align:center;
+    padding:24px;
+    background:
+      radial-gradient(ellipse at 50% 20%, rgba(229,9,20,0.10), transparent 60%),
+      radial-gradient(ellipse at 50% 100%, rgba(183,28,28,0.10), transparent 60%),
+      var(--bg);
+    overflow:hidden;
+  }
+
+  #page2{
+    display:none; /* revealed after the arrow scene */
+    position:relative;
+    min-height:100vh;
+    background:var(--bg);
+    padding:0 0 60px;
+    overflow:hidden;
+  }
+  #page2.visible{ display:block; }
+
+  /* ============================================================
+     PAGE 1 — LOGO / TITLE
+     ============================================================ */
+  .logo{
+    font-size:clamp(32px,6vw,48px);
+    filter:drop-shadow(0 0 14px rgba(229,9,20,0.65));
+    animation: breathe 4s ease-in-out infinite;
+    margin-bottom:10px;
+  }
+
+  .glow-title{
+    font-family:var(--serif);
+    font-weight:700;
+    letter-spacing:0.12em;
+    font-size:clamp(30px,7vw,64px);
+    color:var(--white);
+    text-shadow:
+      0 0 8px rgba(229,9,20,0.55),
+      0 0 22px rgba(229,9,20,0.45),
+      0 0 46px rgba(183,28,28,0.35);
+    animation: flicker 6s ease-in-out infinite;
+    margin-bottom:clamp(28px,6vh,60px);
+  }
+
+  @keyframes flicker{
+    0%,19%,21%,23%,54%,56%,100%{ opacity:1; }
+    20%,22%,55%{ opacity:0.85; }
+  }
+  @keyframes breathe{
+    0%,100%{ transform:scale(1); }
+    50%{ transform:scale(1.08); }
+  }
+
+  /* ============================================================
+     PAGE 1 — HEART + ARROW SCENE
+     ============================================================ */
+  .heart-container{
+    position:relative;
+    width:220px;
+    height:220px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:clamp(20px,5vh,48px);
+  }
+
+  .heart, .heart-half{
+    position:absolute;
+    font-size:clamp(90px,18vw,140px);
+    line-height:1;
+    filter:drop-shadow(0 0 18px rgba(229,9,20,0.75)) drop-shadow(0 0 40px rgba(229,9,20,0.45));
+    user-select:none;
+  }
+
+  .heart{
+    animation: heartbeat 1.8s ease-in-out infinite;
+  }
+  @keyframes heartbeat{
+    0%,100%{ transform:scale(1); }
+    15%{ transform:scale(1.12); }
+    30%{ transform:scale(1); }
+    45%{ transform:scale(1.08); }
+    60%{ transform:scale(1); }
+  }
+
+  /* the two halves start invisible, clipped left/right, revealed on crack */
+  .heart-half{
+    opacity:0;
+    pointer-events:none;
+  }
+  .heart-left{ clip-path: inset(0 50% 0 0); }
+  .heart-right{ clip-path: inset(0 0 0 50%); }
+
+  .heart-left.cracking{
+    opacity:1;
+    animation: fly-left 1s ease-out forwards;
+  }
+  .heart-right.cracking{
+    opacity:1;
+    animation: fly-right 1s ease-out forwards;
+  }
+  @keyframes fly-left{
+    0%{ transform:translate(0,0) rotate(0deg); opacity:1; }
+    100%{ transform:translate(-70px,90px) rotate(-35deg); opacity:0; }
+  }
+  @keyframes fly-right{
+    0%{ transform:translate(0,0) rotate(0deg); opacity:1; }
+    100%{ transform:translate(70px,90px) rotate(35deg); opacity:0; }
+  }
+
+  /* the flying arrow */
+  .arrow{
+    position:absolute;
+    left:-140px;
+    top:50%;
+    transform:translateY(-50%) rotate(90deg);
+    font-size:38px;
+    color:var(--red);
+    text-shadow:0 0 10px rgba(229,9,20,0.8);
+    opacity:0;
+  }
+  .arrow.shoot{
+    animation: fly-arrow 0.55s cubic-bezier(.4,.6,.2,1) forwards;
+  }
+  @keyframes fly-arrow{
+    0%{ opacity:1; left:-140px; }
+    85%{ opacity:1; left:2px; }
+    100%{ opacity:0; left:6px; }
+  }
+
+  /* ============================================================
+     PAGE 1 — BOW BUTTON
+     ============================================================ */
+  .bow-btn{
+    background:transparent;
+    border:2px solid var(--red-soft);
+    border-radius:50%;
+    width:88px;
+    height:88px;
+    font-size:36px;
+    color:var(--white);
+    cursor:pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    box-shadow: 0 0 18px rgba(229,9,20,0.25);
+  }
+  .bow-btn:hover{
+    transform:scale(1.1) rotate(-8deg);
+    border-color:var(--red);
+    box-shadow: 0 0 28px rgba(229,9,20,0.55);
+  }
+  .bow-btn:active{ transform:scale(0.95); }
+  .bow-btn:disabled{ opacity:0.4; cursor:default; transform:none; box-shadow:none; }
+
+  .hint{
+    margin-top:14px;
+    color:var(--gray);
+    font-size:13px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    animation: fade-pulse 2.5s ease-in-out infinite;
+  }
+  @keyframes fade-pulse{
+    0%,100%{ opacity:0.5; }
+    50%{ opacity:1; }
+  }
+
+  /* full-screen fade to black used for the scene transition */
+  #fade-overlay{
+    position:fixed;
+    inset:0;
+    background:#000;
+    opacity:0;
+    pointer-events:none;
+    z-index:999;
+    transition: opacity 0.6s ease;
+  }
+  #fade-overlay.active{ opacity:1; pointer-events:all; }
+
+  /* ============================================================
+     PAGE 2 — AMBIENT PARTICLES
+     ============================================================ */
+  .particles{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    pointer-events:none;
+    z-index:0;
+  }
+  .particle{
+    position:absolute;
+    bottom:-40px;
+    opacity:0;
+    animation-name: float-up;
+    animation-timing-function: ease-in;
+    animation-iteration-count: infinite;
+  }
+  .particle.dot{
+    width:4px;
+    height:4px;
+    border-radius:50%;
+    background:var(--red);
+    box-shadow:0 0 8px 2px rgba(229,9,20,0.6);
+  }
+  @keyframes float-up{
+    0%{ transform:translate(0,0) rotate(0deg); opacity:0; }
+    10%{ opacity:0.8; }
+    90%{ opacity:0.5; }
+    100%{ transform:translate(var(--drift,20px), -110vh) rotate(25deg); opacity:0; }
+  }
+
+  /* ============================================================
+     PAGE 2 — CONTENT
+     ============================================================ */
+  .content{
+    position:relative;
+    z-index:1;
+    max-width:680px;
+    margin:0 auto;
+    padding:80px 24px 40px;
+    text-align:center;
+  }
+
+  .pk-photo{
+    width:clamp(150px,32vw,220px);
+    height:clamp(150px,32vw,220px);
+    object-fit:cover;
+    border-radius:50%;
+    border:2px solid var(--red-soft);
+    box-shadow:
+      0 0 20px rgba(229,9,20,0.45),
+      0 0 50px rgba(229,9,20,0.25);
+    transition: box-shadow 0.4s ease, transform 0.4s ease;
+    will-change: transform;
+  }
+  .pk-photo:hover{
+    box-shadow:
+      0 0 30px rgba(229,9,20,0.7),
+      0 0 70px rgba(229,9,20,0.4);
+    transform:scale(1.03);
+  }
+  /* graceful fallback if PK.jpeg is missing from the folder */
+  .pk-photo.fallback{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:64px;
+    background:var(--card);
+    color:var(--red);
+  }
+
+  .heading{
+    font-family:var(--serif);
+    font-size:clamp(26px,5vw,38px);
+    letter-spacing:0.04em;
+    margin:28px 0 42px;
+    color:var(--white);
+    text-shadow:0 0 16px rgba(229,9,20,0.35);
+    animation: heartbeat 3.6s ease-in-out infinite;
+  }
+
+  .letter{
+    text-align:left;
+  }
+  .letter p{
+    font-size:clamp(15px,2.1vw,17px);
+    line-height:1.9;
+    color:var(--gray);
+    margin-bottom:22px;
+  }
+  .letter p strong{ color:var(--white); font-weight:600; }
+
+  /* scroll-reveal text */
+  .fade-text{
+    opacity:0;
+    transform:translateY(24px);
+    transition: opacity 1s ease, transform 1s ease;
+  }
+  .fade-text.visible{
+    opacity:1;
+    transform:translateY(0);
+  }
+
+  .final-quote{
+    font-family:var(--serif);
+    font-style:italic;
+    font-size:clamp(18px,3vw,24px);
+    color:var(--white);
+    text-align:center;
+    margin:50px 0 10px;
+    padding:28px 22px;
+    border-top:1px solid rgba(229,9,20,0.3);
+    border-bottom:1px solid rgba(229,9,20,0.3);
+    text-shadow:0 0 18px rgba(229,9,20,0.4);
+  }
+
+  /* ============================================================
+     FOOTER
+     ============================================================ */
+  footer{
+    position:relative;
+    z-index:1;
+    text-align:center;
+    padding:50px 24px 30px;
+    color:var(--gray);
+    font-family:var(--serif);
+    font-style:italic;
+    font-size:clamp(13px,2vw,15px);
+    line-height:1.8;
+    border-top:1px solid rgba(255,255,255,0.06);
+    margin-top:30px;
+  }
+
+  /* ============================================================
+     RESPONSIVE TWEAKS
+     ============================================================ */
+  @media (max-width:480px){
+    .heart-container{ width:180px; height:180px; }
+    .bow-btn{ width:76px; height:76px; font-size:30px; }
+    .content{ padding-top:60px; }
+  }
+
+  /* respect reduced-motion preference */
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ================= PAGE 1 : THE ARROW SCENE ================= -->
+  <section id="page1" class="page">
+    <div class="logo">🧿</div>
+    <h1 class="glow-title">CAN WE MEET?</h1>
+
+    <div class="heart-container">
+      <div class="heart" id="heart">❤️</div>
+      <div class="heart-half heart-left" id="heartLeft">❤️</div>
+      <div class="heart-half heart-right" id="heartRight">❤️</div>
+      <div class="arrow" id="arrow">➤</div>
+    </div>
+
+    <button class="bow-btn" id="bowBtn" aria-label="Shoot the arrow">🏹</button>
+    <p class="hint">tap the bow</p>
+  </section>
+
+  <!-- full screen black fade used between scenes -->
+  <div id="fade-overlay"></div>
+
+  <!-- ================= PAGE 2 : THE LETTER ================= -->
+  <section id="page2" class="page">
+    <div class="particles" id="particles"></div>
+
+    <div class="content">
+      <img
+        id="pkImage"
+        class="pk-photo"
+        src="PK.jpeg"
+        alt="A photo of PK"
+        onerror="this.onerror=null;this.classList.add('fallback');this.removeAttribute('src');this.alt='';this.innerHTML='❤️';"
+      >
+
+      <h2 class="heading">For PK ❤️</h2>
+
+      <div class="letter">
+        <p class="fade-text">Some memories don't ask permission to come back. They just arrive, quietly, the way you did — back in <strong>2018</strong>, on a day I didn't know would matter until every day after it did. I still remember that day with a clarity I can't explain. The way the air felt. The way I couldn't stop smiling for no reason I was willing to admit.</p>
+
+        <p class="fade-text">I remember the first treat you gave me at <strong>Bottoli</strong>, too — such a small thing, really. A table, a plate, a little laughter between two people who didn't yet know what they were starting. But that's the strange thing about small memories: they don't ask to be important. They just quietly become priceless, long after the moment has passed, when you finally understand what you were living through.</p>
+
+        <p class="fade-text">I think about the version of us that could have stayed. If we had put down our pride, just once, at the right moment instead of the wrong one, maybe we'd still be finding our way back to each other instead of finding our way through everything else. Pride is a strange thing to lose someone over. It feels like protection at the time. It only feels like a mistake later.</p>
+
+        <p class="fade-text">And I think about <strong>COVID</strong> — that strange, still year the whole world seemed to pause. I've wondered, more than once, what might have happened if you'd given me a second chance in the middle of all that silence. Maybe life would have turned out differently. Maybe we'd have had all that quiet time to simply choose each other again.</p>
+
+        <p class="fade-text">Sometimes, even now, I catch myself imagining another ending for us — one where a conversation goes differently, where someone stays five more minutes, where neither of us walks away. I don't do it to live in the past. I do it because some stories feel unfinished, even when they're over.</p>
+
+        <p class="fade-text">I don't blame you. I want to say that clearly, because I mean it. Life pulls people in directions no one plans for, and you did what felt right to you at the time, just as I did what felt right to me. I'm not angry. I never really was. I simply miss what we could have been — the version of us that never got the chance to exist.</p>
+
+        <p class="fade-text">Thank you for every memory, even the ones that ache a little now. Thank you for 2018, for Bottoli, for every ordinary afternoon that I only recognized as extraordinary once it was gone. You gave me a season of my life I wouldn't erase even if I could. I hope, wherever you are now, that you're happy — genuinely, quietly happy, in the way that outlasts any one person or any one story.</p>
+
+        <p class="final-quote fade-text">"If destiny ever lets our paths cross again... maybe this time we won't let each other go."</p>
+      </div>
+    </div>
+
+    <footer>
+      <p>Some stories never truly end.<br>They simply become memories.</p>
+    </footer>
+  </section>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============================================================
+     ELEMENT REFERENCES
+     ============================================================ */
+  var page1     = document.getElementById('page1');
+  var page2     = document.getElementById('page2');
+  var overlay   = document.getElementById('fade-overlay');
+  var bowBtn    = document.getElementById('bowBtn');
+  var arrow     = document.getElementById('arrow');
+  var heart     = document.getElementById('heart');
+  var heartL    = document.getElementById('heartLeft');
+  var heartR    = document.getElementById('heartRight');
+
+  /* ============================================================
+     SYNTHESIZED "GLASS BREAK" SOUND
+     Built with the Web Audio API so no external audio file
+     is required — keeps everything inside this single file.
+     ============================================================ */
+  function playBreakSound(){
+    try{
+      var AudioCtx = window.AudioContext || window.webkitAudioContext;
+      var ctx = new AudioCtx();
+      var duration = 0.4;
+      var bufferSize = ctx.sampleRate * duration;
+      var buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      var data = buffer.getChannelData(0);
+
+      // white noise, shaped with a fast decay envelope for a "crack" feel
+      for (var i = 0; i < bufferSize; i++){
+        var t = i / bufferSize;
+        var envelope = Math.pow(1 - t, 3);
+        data[i] = (Math.random() * 2 - 1) * envelope;
+      }
+
+      var noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      var filter = ctx.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.setValueAtTime(1800, ctx.currentTime);
+      filter.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + duration);
+
+      var gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.25, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+      noise.start();
+      noise.stop(ctx.currentTime + duration);
+    }catch(e){
+      /* audio is optional — fail silently if unsupported/blocked */
+    }
+  }
+
+  /* ============================================================
+     THE ARROW → HEART → HEARTBREAK → FADE SEQUENCE
+     Total runtime ≈ 2.3s, matching the requested 2–3s window.
+     ============================================================ */
+  function playArrowScene(){
+    bowBtn.disabled = true;
+
+    // 1) fire the arrow toward the heart (~550ms)
+    arrow.classList.add('shoot');
+
+    setTimeout(function(){
+      // 2) arrow has landed — break the heart in two
+      heart.style.opacity = '0';
+      heartL.classList.add('cracking');
+      heartR.classList.add('cracking');
+      playBreakSound();
+    }, 550);
+
+    setTimeout(function(){
+      // 3) fade everything to black
+      overlay.classList.add('active');
+    }, 1350);
+
+    setTimeout(function(){
+      // 4) swap scenes while the screen is black
+      page1.style.display = 'none';
+      page2.classList.add('visible');
+      window.scrollTo(0, 0);
+      buildParticles();
+      initScrollReveal();
+    }, 1950);
+
+    setTimeout(function(){
+      // 5) fade back in on page 2
+      overlay.classList.remove('active');
+    }, 2150);
+  }
+
+  bowBtn.addEventListener('click', playArrowScene);
+
+  /* ============================================================
+     PAGE 2 — FLOATING BROKEN-HEART & GLOW PARTICLES
+     ============================================================ */
+  function buildParticles(){
+    var field = document.getElementById('particles');
+    if (!field || field.dataset.built) return;
+    field.dataset.built = 'true';
+
+    var symbols = ['💔','💔','✨'];
+    var total = 18;
+
+    for (var i = 0; i < total; i++){
+      var el = document.createElement('div');
+      var isDot = Math.random() < 0.35;
+
+      if (isDot){
+        el.className = 'particle dot';
+      } else {
+        el.className = 'particle';
+        el.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+        el.style.fontSize = (14 + Math.random() * 18) + 'px';
+      }
+
+      var left = Math.random() * 100;
+      var duration = 10 + Math.random() * 12;
+      var delay = Math.random() * 14;
+      var drift = (Math.random() * 120 - 60) + 'px';
+
+      el.style.left = left + '%';
+      el.style.setProperty('--drift', drift);
+      el.style.animationDuration = duration + 's';
+      el.style.animationDelay = delay + 's';
+
+      field.appendChild(el);
+    }
+  }
+
+  /* ============================================================
+     SCROLL-TRIGGERED TEXT REVEAL FOR THE LETTER
+     ============================================================ */
+  function initScrollReveal(){
+    var targets = document.querySelectorAll('.fade-text');
+    if (!('IntersectionObserver' in window)){
+      targets.forEach(function(t){ t.classList.add('visible'); });
+      return;
+    }
+    var observer = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting){
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.2, rootMargin: '0px 0px -40px 0px' });
+
+    targets.forEach(function(t){ observer.observe(t); });
+  }
+
+  /* ============================================================
+     GENTLE PARALLAX ON SCROLL (photo + heading drift slightly)
+     ============================================================ */
+  window.addEventListener('scroll', function(){
+    if (!page2.classList.contains('visible')) return;
+    var y = window.scrollY;
+    var img = document.getElementById('pkImage');
+    var heading = document.querySelector('.heading');
+    if (img)     img.style.transform     = 'translateY(' + (y * 0.04) + 'px)';
+    if (heading) heading.style.transform = 'translateY(' + (y * 0.02) + 'px)';
+  }, { passive: true });
+
+})();
+</script>
+</body>
+</html>
